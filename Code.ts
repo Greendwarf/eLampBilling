@@ -2,16 +2,20 @@
 * @NotOnlyCurrentDoc
 **/
 
+interface elmHtmlService extends GoogleAppsScript.HTML.HtmlTemplate {
+    objectType?: string;
+}
+
+const currentSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+
 /* Checks if range1 is the same as range2 i.e. covers the same cells */
 function eLampIsSameRange(range1, range2) {
-  var isSameRange = range1.getRow() == range2.getRow() && range1.getLastRow() == range2.getLastRow() && range1.getColumn() == range2.getColumn() && range1.getLastColumn() == range2.getLastColumn() ? true : false;
-  return isSameRange;
+  return range1.getRow() == range2.getRow() && range1.getLastRow() == range2.getLastRow() && range1.getColumn() == range2.getColumn() && range1.getLastColumn() == range2.getLastColumn() ? true : false;
 }
 
 /* Checks if range 2 encompasses range1 */
 function eLampIsInRange(range1, range2) {
-  var isInRange = range1.getRow() >= range2.getRow() && range1.getLastRow() <= range2.getLastRow() && range1.getColumn() >= range2.getColumn() && range1.getLastColumn() <= range2.getLastColumn() ? true : false;
-  return isInRange;
+  return range1.getRow() >= range2.getRow() && range1.getLastRow() <= range2.getLastRow() && range1.getColumn() >= range2.getColumn() && range1.getLastColumn() <= range2.getLastColumn() ? true : false;
 }
 
 /* Checks if range 1 runs across range 2, i.e. might start in range 2 and end outside range 2, or might start outside range 2 and end in range 2, or might start and end outside range 2 but run across range 2, or might be included in range2 */
@@ -20,60 +24,54 @@ function eLampIsAcrossRange(range1, range2) {
 }
 
 function onOpen() {
-  var ui = SpreadsheetApp.getUi();
+  let ui = SpreadsheetApp.getUi();
   
   ui.createAddonMenu()
     .addItem("Gérer Facturation", 'manageBill')
     .addItem("Gérer Commandes", "manageOrders")
     .addItem("Gérer Clients", "manageAccounts")
     .addToUi();
-  }
+}
 
-function manageBill() {
-  var html = HtmlService.createTemplateFromFile("IndexManage");
+function manageBill(): void {
+  let html: elmHtmlService = HtmlService.createTemplateFromFile("indexhtml/IndexManage");
   html.objectType = "Bills";
-  html = html.evaluate();
-  SpreadsheetApp.getUi().showSidebar(html);
+  SpreadsheetApp.getUi().showSidebar(html.evaluate());
 }
 
-function manageOrders() {
-  var html = HtmlService.createTemplateFromFile("IndexManage");
+function manageOrders(): void {
+  let html: elmHtmlService = HtmlService.createTemplateFromFile("indexhtml/IndexManage");
   html.objectType = "Orders";
-  html = html.evaluate();
-  SpreadsheetApp.getUi().showSidebar(html);
+  SpreadsheetApp.getUi().showSidebar(html.evaluate());
 }
 
-function manageAccounts() {
-  var html = HtmlService.createTemplateFromFile("IndexManage");
+function manageAccounts(): void {
+  let html: elmHtmlService = HtmlService.createTemplateFromFile("indexhtml/IndexManage");
   html.objectType = "Accounts";
-  html = html.evaluate();
-  SpreadsheetApp.getUi().showSidebar(html);
+  SpreadsheetApp.getUi().showSidebar(html.evaluate());
 }
 
-function createNewBill() {
-  var html = HtmlService.createTemplateFromFile("IndexCreate");
+function createNewBill(): void {
+  let html: elmHtmlService = HtmlService.createTemplateFromFile("indexhtml/IndexCreate");
   html.objectType = "Bills";
-  html = html.evaluate();
-  SpreadsheetApp.getUi().showModalDialog(html, "Créer une nouvelle facture");
+  SpreadsheetApp.getUi().showModalDialog(html.evaluate(), "Créer une nouvelle facture");
 }
 
-function createNewOrder() {
-  var html = HtmlService.createTemplateFromFile("IndexCreate");
+function createNewOrder(): void {
+  let html: elmHtmlService = HtmlService.createTemplateFromFile("indexhtml/IndexCreate");
   html.objectType = "Orders";
-  html = html.evaluate();
-  SpreadsheetApp.getUi().showModalDialog(html, "Créer une nouvelle facture");
+  SpreadsheetApp.getUi().showModalDialog(html.evaluate(), "Créer une nouvelle facture");
 }
 
-function createNewAccount() {
-  var html = HtmlService.createTemplateFromFile("IndexCreate");
+function createNewAccount(): void {
+  let html: elmHtmlService = HtmlService.createTemplateFromFile("indexhtml/IndexCreate");
   html.objectType = "Accounts";
-  html = html.evaluate();
-  SpreadsheetApp.getUi().showModalDialog(html, "Créer une nouvelle facture");
+  SpreadsheetApp.getUi().showModalDialog(html.evaluate(), "Créer une nouvelle facture");
 }
 
-function getParameterData() {
-  var billParametersSpreadsheetValues = SpreadsheetApp.getActiveSpreadsheet().getRangeByName("Paramètres").getValues();
-  var parameterData = [];
+function getParameterData(): any[] {
+  let billParametersSpreadsheetValues: any[] = currentSpreadsheet.getRangeByName("Paramètres").getValues();
+  let parameterData: any[] = new Array();
   
   billParametersSpreadsheetValues.forEach(function(element) {
     parameterData.push({
@@ -88,8 +86,8 @@ function getParameterData() {
 
 function loadBills() {
 
-  var billsSpreadsheetValues = SpreadsheetApp.getActiveSpreadsheet().getRangeByName("Bills").getValues();
-  var billsKeysSpreadsheetValues = SpreadsheetApp.getActiveSpreadsheet().getRangeByName("Paramètres").getValues();
+  var billsSpreadsheetValues = currentSpreadsheet.getRangeByName("Bills").getValues();
+  var billsKeysSpreadsheetValues = currentSpreadsheet.getRangeByName("Paramètres").getValues();
   var billsData = [];
   
   billsSpreadsheetValues[0] = billsSpreadsheetValues
@@ -98,20 +96,20 @@ function loadBills() {
     .map(function(header) {
       var newHeader = header;
       billsKeysSpreadsheetValues.some(function(keyPairing) {
-        if(header == keyPairing[0]) { newHeader = keyPairing[1]; console.log(newHeader); return true; }
+        if(header == keyPairing[0]) { newHeader = keyPairing[1]; Logger.log(newHeader); return true; }
         return false;
       });
       return newHeader;
     });
     
-    console.log("headers : " +billsSpreadsheetValues[0]);
+    Logger.log("headers : " + billsSpreadsheetValues[0]);
   
   billsData = billsSpreadsheetValues
     .filter(function(element, index) { return index > 0; })
     .map(function(line, lineIndex) {
       var newObject = {};
       line.forEach(function(cell, cellIndex) {
-        newObject[billsSpreadsheetValues[0][cellIndex]] = Object.prototype.toString.call(cell) === '[object Date]' ? cell.toString() : cell;
+        newObject[billsSpreadsheetValues[0][cellIndex].toString()] = Object.prototype.toString.call(cell) === '[object Date]' ? cell.toString() : cell;
       });
       return newObject;
     });
@@ -122,13 +120,13 @@ function loadBills() {
 
 function etablirBill(formObject) {
   
-  var url = SpreadsheetApp.getActiveSpreadsheet().getRangeByName("Bill_Template").getValues()[0][0];
-  var billTemplateID = getIdFrom(url);
-  var billTemplateFile = DriveApp.getFileById(billTemplateID);
-  var billTemplateFolder = getImmediateFolder(billTemplateFile);
-  var existingBills = billTemplateFolder.getFilesByName(formObject['nom-facture']);
-  var toBeFormatedAsDate = ["debut-prestation", "fin-prestation", "debut-licences", "fin-licences"];
-  var toBeFormatedAsNumber = ["prix-prestation", "prix-unitaire-licences", "prix-total-licences", ];
+  let url = currentSpreadsheet.getRangeByName("Bill_Template").getValues()[0][0];
+  let billTemplateID = getIdFrom(url);
+  let billTemplateFile = DriveApp.getFileById(billTemplateID);
+  let billTemplateFolder = getImmediateFolder(billTemplateFile);
+  let existingBills = billTemplateFolder.getFilesByName(formObject['nom-facture']);
+  let toBeFormatedAsDate = ["debut-prestation", "fin-prestation", "debut-licences", "fin-licences"];
+  let toBeFormatedAsNumber = ["prix-prestation", "prix-unitaire-licences", "prix-total-licences", ];
   
   if(getFileIteratorSize(existingBills) > 0) {
     
@@ -136,17 +134,17 @@ function etablirBill(formObject) {
   
   } else {
     
-    var body = DocumentApp.openById(billTemplateFile.makeCopy(formObject['nom-facture']).getId()).getBody();
-    var text = body.editAsText();
-    var markupsBills = SpreadsheetApp.getActiveSpreadsheet().getRangeByName("Paramètres").getValues();
+    let body: GoogleAppsScript.Document.Body = DocumentApp.openById(billTemplateFile.makeCopy(formObject['nom-facture']).getId()).getBody();
+    let text: GoogleAppsScript.Document.Text = body.editAsText();
+    let markupsBills: Object[][] = currentSpreadsheet.getRangeByName("Paramètres").getValues();
+
+    markupsBills.forEach((element)=>{
+      text.replaceText("<\\["+element[1]+"\\]>", formObject[element[1].toString()]);
+    });
     
-    for( i=0; i < markupsBills.length; i++) {
-      text.replaceText("<\\["+markupsBills[i][1]+"\\]>", formObject[markupsBills[i][1]]);
-    }
-    
-    var prixTotal = 0;
-    var TVA = 0;
-    var totalTTC = 0;
+    let prixTotal = 0;
+    let TVA = 0;
+    let totalTTC = 0;
     
     if(formObject['type-facture'] == "Prestation") {
     
@@ -169,22 +167,22 @@ function etablirBill(formObject) {
     TVA = prixTotal * 0.2;
     totalTTC = prixTotal + TVA;
     
-    text.replaceText("<\\[prix-total-HT\\]>", prixTotal);
-    text.replaceText("<\\[tva-total\\]>", TVA);
-    text.replaceText("<\\[total-ttc\\]>", totalTTC);       
+    text.replaceText("<\\[prix-total-HT\\]>", prixTotal.toString());
+    text.replaceText("<\\[tva-total\\]>", TVA.toString());
+    text.replaceText("<\\[total-ttc\\]>", totalTTC.toString());       
 
   }
 }
 
 function envoyerBill(formObject) {
-  console.log('blob_envoyer');
-  console.log(formObject);
+  Logger.log('blob_envoyer');
+  Logger.log(formObject);
 }
 
 function payerBill(formObject) {
 
-  var billsSpreadsheetValues = SpreadsheetApp.getActiveSpreadsheet().getRangeByName("Bills").getValues();
-  var billParametersSpreadsheetValues = SpreadsheetApp.getActiveSpreadsheet().getRangeByName("Paramètres").getValues();
+  var billsSpreadsheetValues = currentSpreadsheet.getRangeByName("Bills").getValues();
+  var billParametersSpreadsheetValues = currentSpreadsheet.getRangeByName("Paramètres").getValues();
   var billsData = [];
   var headerValues = [];
 
@@ -237,7 +235,7 @@ function payerBill(formObject) {
     billReturnValues.push(tempArr);
   });
   
-  SpreadsheetApp.getActiveSpreadsheet().getRangeByName("Bills").setValues(billReturnValues);
+  currentSpreadsheet.getRangeByName("Bills").setValues(billReturnValues);
   
   var returnData = {};
   
@@ -276,6 +274,8 @@ function getFileIteratorSize(fileIterator) {
 
 function removeDocMarkups(body, markups) {
 
+    let i: number = 0;
+
   for(i=0; i < markups.length; i++) {
   
     body.editAsText().replaceText(markups[i], "");
@@ -290,7 +290,7 @@ function removeDocSection(body, startRegExp, endRegExp) {
   
   for (var i=totalchildren-1; i >= 0; i--) {
     
-    console.log("body child : " + body.getChild(i));
+    Logger.log("body child : " + body.getChild(i));
     
     if(body.getChild(i).getType() == DocumentApp.ElementType.TABLE) {
       var thisBodyChild = body.getChild(i).asTable();
@@ -336,21 +336,20 @@ function removeDocSection(body, startRegExp, endRegExp) {
 }
 
 function include(filename) {
-    console.log("filename babilobabd : " + filename);
+    Logger.log("filename babilobabd : " + filename);
     return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
-function getIdFrom(url) {
-  var id = "";
-  var parts = url.split(/^(([^:\/?#]+):)?(\/\/([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/);
+function getIdFrom(url): string {
+  let id: string & string[];
+  let parts = url.split(/^(([^:\/?#]+):)?(\/\/([^\/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?/);
   if (url.indexOf('?id=') >= 0){
      id = (parts[6].split("=")[1]).replace("&usp","");
-     return id;
+     return <string>id;
    } else {
-   id = parts[5].split("/");
-   //Using sort to get the id as it is the longest element. 
-   var sortArr = id.sort(function(a,b){return b.length - a.length});
-   id = sortArr[0];
-   return id;
+        id = parts[5].split("/");
+        //Using sort to get the id as it is the longest element. 
+        let sortArr: string[] = <string[]>id.sort(function(a,b){return b.length - a.length});
+        return sortArr[0];
    }
  }
