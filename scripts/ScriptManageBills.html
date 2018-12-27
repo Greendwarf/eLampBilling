@@ -1,0 +1,113 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<script>
+
+var actionBills = ["etablir", "envoyer", "payer"];
+var billManagementFunctions = {};
+
+/* This function handles the success callback for the create bill function*/
+function etablirSuccess() {
+  google.script.run.withSuccessHandler(displayBills).successAndUpdate("Etablir");
+}
+
+/* This function handles the success callback for the send bill function */
+function envoyerSuccess() {
+  google.script.run.withSuccessHandler(displayBills).successAndUpdate("Envoyer")
+}
+
+/* This function handles the success callback for close bill function */
+function payerSuccess() {
+  google.script.run.withSuccessHandler(displayBills).successAndUpdate("Payer");
+}
+
+/* This function handles procedural form creation for each bill. This is a substitute to a proper React implement due to GAS lack of proper React support
+ * The forms created only contain one button each, launching a specific step of the workflow for a bill
+ * The submit event is handled further down in the code, basically a workflow function (createBill, sendBill, closeBill) is executed depending on the form
+ * NB : the form created includes all bill object's parameters as hidden inputs for later consumption by a server-side script
+**/
+function createBillManagementForm(billElement, formID, controlProperty, submitValue) {
+
+  var elementDump ="";
+
+  elementDump += `<form id="${formID}-${billElement['nom-facture']}" class="checkbox-container bill-form">`;
+  Object.keys(billElement).forEach((key) => { elementDump += `<input type="hidden" name="${key}" value="${billElement[key]}"/>`; });
+  elementDump += `<input type="submit" name="${billElement['nom-facture']}-${formID}" id="${billElement['nom-facture']}-${formID}"`;
+  elementDump += ` class="sub-element facture-statut ${controlProperty}`;
+  if(billElement[controlProperty]) { elementDump += ' statut-ok'; }
+  elementDump += `" value="${submitValue}"/>`;
+  elementDump += '<span class="check-symbol"></span>';
+  elementDump += '</form>';
+  
+  return elementDump;
+  
+}
+
+/* This function generates one control panel per bill in a sidebar in order to handle workflow states for each bill */
+function displayBills(bills) {
+
+  $("#bills_cards").html(() => {
+    
+    return bills.map((element) => {
+    
+      var elementDump = '<div class="facture">';
+      
+      elementDump += `<div id="${element['nom-facture']}-nom-facture" class="sub-element nom-facture"><b>Facture N°${element['nom-facture']}</b></div>`;
+      elementDump += `<div id="${element['nom-facture']}-contrat" class="sub-element contrat">Contrat : ${element['contrat']}</div>`;
+      
+      if (!element['facture-etablie']) {
+        elementDump += createBillManagementForm(element, "etablir-form", "facture-etablie", "Editer");
+      } else if (!element['facture-envoyee']) {
+        elementDump += createBillManagementForm(element, "envoyer-form", "facture-envoyee", "Envoyer");
+      } else if (!element['facture-payee']) {
+        elementDump += createBillManagementForm(element, "payer-form", "facture-payee", "Fermer");
+      } else {
+        elementDump += '<p>Cette facture ne devrait pas être ici';
+      }
+      
+      elementDump += '</div>';
+      
+      return elementDump;
+      
+    });
+  
+  });
+
+  $("input[type=submit].facture-etablie").addClass("create");
+  $("input[type=submit].facture-envoyee, input[type=submit].facture-payee").addClass("action");
+
+  $(".bill-form").each(function () {
+    
+    $(this).submit(function (e) {
+      
+      e.preventDefault();
+      
+      var id = this.id;
+      var actionID = "";
+      
+      if (id.indexOf("-") >= 0) { actionID = id.split("-")[0]; }
+      if(actionBills.includes(actionID)) { billManagementFunctions[actionID]("#"+id); }
+    
+    });
+    
+  });
+
+}
+
+/* This function launches the whole shit-fest */
+$(document).ready(function() {
+  
+  actionBills.map(element => { 
+    billManagementFunctions[element] = new Function('return function (formID) { google.script.run.withSuccessHandler('+element+'Success).'+element+'Bill($(formID).get(0));}')(); 
+  });
+  
+  $("#create-bill-link").click(function(e) {
+    e.preventDefault();
+    google.script.run.createNewBill();
+  });
+
+  google.script.run.withSuccessHandler(displayBills).loadBills();
+
+});
+
+</script>
+
