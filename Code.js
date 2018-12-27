@@ -9,9 +9,8 @@ function eLampIsSameRange(range1, range2) {
 }
 
 /* Checks if range 2 encompasses range1 */
-function eLampIsInRange(range1, range2) {
-  var isInRange = range1.getRow() >= range2.getRow() && range1.getLastRow() <= range2.getLastRow() && range1.getColumn() >= range2.getColumn() && range1.getLastColumn() <= range2.getLastColumn() ? true : false;
-  return isInRange;
+function eLampIsInRange(range1, range2): boolean {
+  return isInRange = range1.getRow() >= range2.getRow() && range1.getLastRow() <= range2.getLastRow() && range1.getColumn() >= range2.getColumn() && range1.getLastColumn() <= range2.getLastColumn() ? true : false;
 }
 
 /* Checks if range 1 runs across range 2, i.e. might start in range 2 and end outside range 2, or might start outside range 2 and end in range 2, or might start and end outside range 2 but run across range 2, or might be included in range2 */
@@ -20,17 +19,17 @@ function eLampIsAcrossRange(range1, range2) {
 }
 
 function onOpen() {
-  var ui = SpreadsheetApp.getUi();
+  let ui = SpreadsheetApp.getUi();
   
   ui.createAddonMenu()
     .addItem("Gérer Facturation", 'manageBill')
     .addItem("Gérer Commandes", "manageOrders")
     .addItem("Gérer Clients", "manageAccounts")
     .addToUi();
-  }
+}
 
 function manageBill() {
-  var html = HtmlService.createTemplateFromFile("IndexManage");
+  let html = HtmlService.createTemplateFromFile("IndexManage");
   html.objectType = "Bills";
   html = html.evaluate();
   SpreadsheetApp.getUi().showSidebar(html);
