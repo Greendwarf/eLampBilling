@@ -65,7 +65,7 @@ function loadForm(formData) {
 
     return `
       <p><b>Informations générales :</b></p>
-      <div class="form-group">${inputFields['nom-facture']}</div>
+      <div class="form-group" id="nom-facture-field">${inputFields['nom-facture']}</div>
       <div class="form-group ui-widget" id="contract-field">${inputFields['contrat']}</div>
       <div class="form-group">${inputFields['bon-commande']}</div>
       <div class="form-group">${inputFields['client']}</div>
@@ -127,6 +127,39 @@ function loadForm(formData) {
 
   $("#contract-field input").autocomplete({
     source: contractData
+  }).on("autocompleteselect", function(event, ui) {
+    let val = ui.item.value;
+    let index = 1;
+    if(val.length >= 8) {
+      let noMatch = true;
+      while(noMatch) {
+        noMatch = false;
+        existingBillsData.some(element => {
+          if(element == val+"_"+index) { noMatch = true; index++; return true; }
+          return false;
+        });
+      }
+    }
+    
+    $("#nom-facture-field input").val(val+"_"+index);
+  });
+
+  $("#contract-field input").on("input", function () {
+    let val = $(this).val();
+    let index = 1;
+    if(val.length >= 8) {
+      let noMatch = true;
+      while(noMatch) {
+        noMatch = false;
+        existingBillsData.some(element => {
+          if(element == val+"_"+index) { noMatch = true; index++; return true; }
+          return false;
+        });
+      }
+    }
+    
+    $("#nom-facture-field input").val(val+"_"+index);
+    
   });
 
   google.script.run.withSuccessHandler(loadAutocomplete).getPipedriveAccounts();
@@ -137,10 +170,8 @@ function loadAutocomplete(accountsData) {
 
   let accountsName = [];
   accountsName = accountsData.map((element) => {
-    return element['title'];
+    return element['org_name'];
   });
-
-  console.log("accountsname : " + accountsName);
 
   $("#autocmp-accounts").autocomplete({
     source: accountsName

@@ -2,12 +2,33 @@
 
 <script>
 
+function loadBills(orderData) {
 
+    orderData['order-data'].forEach(order => {
+        let billsSum = 0;
+        orderData['bill-data'].forEach(bill => {
+            if(bill['Bon de commande']==order['Bon de commande']) {
+                billsSum = billsSum + bill['Prix HT prestation'] + bill['Prix total € HT'];
+            }
+        });
+        order['ratio-paid'] = (order['Montant HT'] == 0) ? 0 : billsSum / order['Montant HT'];
+    });
+
+    $("#bills_cards").html(function() {
+        return orderData['order-data'].map(element => {
+            return `
+                <div class="order-card">
+                    <div>${element['Bon de commande']}</div>
+                    <div>${element['Montant HT']}</div>
+                    <div>${element['ratio-paid']}</div>
+                </div>`;
+        });
+    });
+
+}
 
 $(document).ready(function() {
-
-
-
+  google.script.run.withSuccessHandler(loadBills).getOrderData();
 });
 
 </script>

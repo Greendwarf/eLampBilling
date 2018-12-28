@@ -52,7 +52,7 @@ function authCallback(request) {
   }
 }
   
-function getPipedriveAccounts() {
+export function getPipedriveAccounts() {
   var pipedriveService = getPipedriveService();
   var response = UrlFetchApp.fetch('https://api-proxy.pipedrive.com/deals', {
       headers: {

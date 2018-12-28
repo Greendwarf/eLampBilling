@@ -7,7 +7,7 @@ interface elmHtmlService extends GoogleAppsScript.HTML.HtmlTemplate {
     authorizationUrl?: string;
 }
 
-const currentSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+export const currentSpreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
 
 /* Checks if range1 is the same as range2 i.e. covers the same cells */
 function eLampIsSameRange(range1, range2) {
@@ -304,7 +304,7 @@ function payerBill(formObject) {
 }
 
 function successAndUpdate(action) {
-  SpreadsheetApp.getUi().alert("lol " + action);
+  SpreadsheetApp.getUi().alert("Bravo " + action);
   return loadBills();
 }
 

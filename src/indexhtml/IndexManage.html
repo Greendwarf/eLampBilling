@@ -6,7 +6,11 @@
   </head>
   <body>
     <div id="head_bar">
-      <a href="#" class="red-link" id="create-bill-link"><span class="current">+ Ajouter une facture</span></a>
+      <? if(objectType=="Bills"){ ?>
+        <a href="#" class="red-link" id="create-bill-link"><span class="current">+ Ajouter une facture</span></a>
+      <? } else if (objectType=="Orders") { ?>
+        <a href="#" class="red-link" id="create-order-link"><span class="current">+ Ajouter une commande</span></a>
+      <? } ?>
       <span class="fas fa-refresh"></span>
     </div>
     <div id="bills_cards"></div>
