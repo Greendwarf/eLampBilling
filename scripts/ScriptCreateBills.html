@@ -1,4 +1,5 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 
 <script>
 
@@ -11,9 +12,13 @@ function loadForm(parameterData) {
       switch(parameter['parameter-type']) {
       
         case 'one-line' : 
-          return `<div class="form-group"><label for="${parameter['parameter-title']}">${parameter['column-title']}</label><input type="text" name="${parameter['parameter-title']}"/></div>`
+          return `<div class="form-group"><label for="${parameter['parameter-title']}">${parameter['column-title']}</label><input type="text" name="${parameter['parameter-title']}"/></div>`;
           break;
-          
+        
+        case 'account-select' :
+          return `<div class="form-group"><label for="${parameter['parameter-title']}">${parameter['column-title']}</label><input type="text" name="${parameter['paramater-title']}" class="autocomplete-accounts"/></div>`; 
+          break; 
+
         default : 
           return '<div>' + parameter['parameter-title'] + '</div>';
           ;
@@ -22,6 +27,20 @@ function loadForm(parameterData) {
     
     });
     
+  });
+
+  google.withSuccessHandler(loadAutocomplete).getPipedriveAccounts();
+}
+
+function loadAutocomplete(accountsData) {
+
+  let accountsName = [];
+  accountsName = accountsData.map((element) => {
+    return element['org_name'];
+  });
+
+  $(".account-autocomplete").autocomplete({
+    source: accountsName
   });
 }
 

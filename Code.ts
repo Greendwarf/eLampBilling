@@ -4,6 +4,7 @@
 
 interface elmHtmlService extends GoogleAppsScript.HTML.HtmlTemplate {
     objectType?: string;
+    authorizationUrl?: string;
 }
 
 const currentSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
@@ -23,7 +24,11 @@ function eLampIsAcrossRange(range1, range2) {
   
 }
 
-function onOpen() {
+function onInstall(e) {
+  onOpen(e);
+}
+
+function onOpen(e) {
   let ui = SpreadsheetApp.getUi();
   
   ui.createAddonMenu()
@@ -46,9 +51,20 @@ function manageOrders(): void {
 }
 
 function manageAccounts(): void {
-  let html: elmHtmlService = HtmlService.createTemplateFromFile("indexhtml/IndexManage");
-  html.objectType = "Accounts";
-  SpreadsheetApp.getUi().showSidebar(html.evaluate());
+  var pipedriveService = getPipedriveService();
+  if(!pipedriveService.hasAccess()) {
+    let authorizationUrl = pipedriveService.getAuthorizationUrl();
+    let template: elmHtmlService = HtmlService.createTemplate(
+        '<a href="<?= authorizationUrl ?>" target="_blank">Authorize</a>. ' +
+        'Reopen the sidebar when the authorization is complete.');
+    template.authorizationUrl = authorizationUrl;
+    let page = template.evaluate();
+    SpreadsheetApp.getUi().showSidebar(page);
+  } else {
+    var html: elmHtmlService = HtmlService.createTemplateFromFile("indexhtml/IndexManage");
+    html.objectType = "Accounts";
+    SpreadsheetApp.getUi().showSidebar(html.evaluate());
+  }
 }
 
 function createNewBill(): void {
