@@ -24,6 +24,14 @@ function eLampIsAcrossRange(range1, range2) {
   
 }
 
+function uniq(a) {
+  var seen = {};
+  return a.filter(function(item) {
+      return seen.hasOwnProperty(item) ? false : (seen[item] = true);
+  });
+}
+
+
 function onInstall(e) {
   onOpen(e);
 }
@@ -85,32 +93,61 @@ function createNewAccount(): void {
   SpreadsheetApp.getUi().showModalDialog(html.evaluate(), "Créer une nouvelle facture");
 }
 
-function getParameterData(): any[] {
+function getCreateBillsFormData(): object {
+  let billSpreadsheetValues = currentSpreadsheet.getRangeByName("Bills").getValues();
   let billParametersSpreadsheetValues: any[] = currentSpreadsheet.getRangeByName("Paramètres").getValues();
-  let parameterData: any[] = new Array();
-  
+  let formData: object = {};
+  formData['parameters-data'] = [];
+  formData['contracts-data']= [];
+  formData['bills-data'] = [];
+
   billParametersSpreadsheetValues.forEach(function(element) {
-    parameterData.push({
+    formData['parameters-data'].push({
       'column-title' : element[0],
       'parameter-title' : element[1],
       'parameter-type' : element[2]
     });
   });
+
+  let billColumnFound = false;
+  let contractColumnFound = false;
+
+  billSpreadsheetValues[0].some(function(header, headerIndex) {
+    if(billColumnFound && contractColumnFound){
+      return true;
+    } else {
+      if(header=="Contrat") {
+        billSpreadsheetValues.forEach(element => {
+          formData['contracts-data'].push(element[headerIndex]);
+        });
+        contractColumnFound = true;
+      } else if (header=="Nom de la facture") {
+        billSpreadsheetValues.forEach(element=> {
+          formData['bills-data'].push(element[headerIndex]);
+        });
+        billColumnFound = true;
+      }
+    }
+    return false;
+  });
+
+  formData['contracts-data'] = uniq(formData['contracts-data']);
+  formData['bills-data'] = uniq(formData['bills-data']);
   
-  return parameterData;
+  return formData;
 }
 
 function loadBills() {
 
-  var billsSpreadsheetValues = currentSpreadsheet.getRangeByName("Bills").getValues();
-  var billsKeysSpreadsheetValues = currentSpreadsheet.getRangeByName("Paramètres").getValues();
-  var billsData = [];
+  let billsSpreadsheetValues = currentSpreadsheet.getRangeByName("Bills").getValues();
+  let billsKeysSpreadsheetValues = currentSpreadsheet.getRangeByName("Paramètres").getValues();
+  let billsData = [];
   
   billsSpreadsheetValues[0] = billsSpreadsheetValues
     .filter(function(element, index) { return index == 0; })
     .reduce(function(bout1, bout2) { return bout1.concat(bout2); })
     .map(function(header) {
-      var newHeader = header;
+      let newHeader = header;
       billsKeysSpreadsheetValues.some(function(keyPairing) {
         if(header == keyPairing[0]) { newHeader = keyPairing[1]; Logger.log(newHeader); return true; }
         return false;
@@ -123,7 +160,7 @@ function loadBills() {
   billsData = billsSpreadsheetValues
     .filter(function(element, index) { return index > 0; })
     .map(function(line, lineIndex) {
-      var newObject = {};
+      let newObject = {};
       line.forEach(function(cell, cellIndex) {
         newObject[billsSpreadsheetValues[0][cellIndex].toString()] = Object.prototype.toString.call(cell) === '[object Date]' ? cell.toString() : cell;
       });
@@ -197,10 +234,10 @@ function envoyerBill(formObject) {
 
 function payerBill(formObject) {
 
-  var billsSpreadsheetValues = currentSpreadsheet.getRangeByName("Bills").getValues();
-  var billParametersSpreadsheetValues = currentSpreadsheet.getRangeByName("Paramètres").getValues();
-  var billsData = [];
-  var headerValues = [];
+  let billsSpreadsheetValues = currentSpreadsheet.getRangeByName("Bills").getValues();
+  let billParametersSpreadsheetValues = currentSpreadsheet.getRangeByName("Paramètres").getValues();
+  let billsData = [];
+  let headerValues = [];
 
   billParametersSpreadsheetValues.forEach(function(parameter) {
     billsSpreadsheetValues[0].some(function(header, index) {

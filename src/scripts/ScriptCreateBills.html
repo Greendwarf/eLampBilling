@@ -1,0 +1,158 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+
+<script>
+
+function loadForm(formData) {
+
+  var inputFields = {};
+  let parameterData = formData['parameters-data'];
+  let contractData = formData['contracts-data'];
+  let existingBillsData = formData['bills-data'];
+
+  $("form#create-bill").html(() => {
+
+    parameterData.forEach(function(parameter) {
+
+      inputFields[parameter['parameter-title']] = (function(currentParam) {
+      
+        switch(currentParam['parameter-type']) {
+        
+          case 'one-line' : 
+            return `<label for="${currentParam['parameter-title']}">${currentParam['column-title']}</label>
+                    <input type="text" name="${currentParam['parameter-title']}"/>`;
+            break;
+          
+          case 'account-select' :
+            return `<div class="ui-widget">
+                      <label for="${currentParam['parameter-title']}">${currentParam['column-title']}</label>
+                      <input name="${currentParam['parameter-title']}" id="autocmp-accounts" autocomplete="off">
+                    </div>`; 
+            break; 
+          
+          case 'description' :
+            return `<label for="${currentParam['parameter-title']}">${currentParam['column-title']}</label>
+                    <textarea name="${currentParam['parameter-title']}"></textarea>`;
+            break;
+
+          case 'hidden' :
+            return `<input type="hidden" name="${currentParam['parameter-title']}"/>`;
+            break;
+
+          case 'uneditable' :
+            return `<label for="${currentParam['parameter-title']}">${currentParam['column-title']}</label>
+                    <input type="text" disabled name="${currentParam['parameter-title']}"/>`;
+            break;
+
+          case 'date' :
+            return `<label for="${currentParam['parameter-title']}">${currentParam['column-title']}</label>
+                    <input type="text" class="datepicker-widg">`;
+            break;
+
+          case 'select':
+            return '<div>' + currentParam['parameter-title'] + '</div>'; 
+            break;
+
+          default : 
+            return '<div>' + currentParam['parameter-title'] + '</div>';
+            ;
+        
+        }
+
+      })(parameter);
+    
+    });
+
+    return `
+      <p><b>Informations générales :</b></p>
+      <div class="form-group">${inputFields['nom-facture']}</div>
+      <div class="form-group ui-widget" id="contract-field">${inputFields['contrat']}</div>
+      <div class="form-group">${inputFields['bon-commande']}</div>
+      <div class="form-group">${inputFields['client']}</div>
+      <p><b>Informations pour la facturation :</b></p>
+      <div class="form-group">${inputFields['entite-facturation']}</div>
+      <div class="form-group">${inputFields['adresse-facturation']}</div>
+      <div class="form-group">${inputFields['respo-facturation']}</div>
+      <div class="form-group">${inputFields['date-facturation']}</div>
+      <p><b>Informations sur la prestation / les licences (laisser vide si inapplicable)</b></p>
+      <p>Sur la prestation :</p>
+      <a href="#" class="red-link" id="add-service-line"><span class="current">+ Ajouter une ligne de prestation</span></a>
+      <table id="service-lines">
+      </table>
+      <p>Sur les licences :</p>
+      <a href="#" class="red-link" id="add-license-line"><span class="current">+ Ajouter une ligne de licences</span></a>
+      <table id="license-lines">
+      </table>
+      <p><b>Informations concernant l'encaissement :</b></p>
+      <div class="form-group">${inputFields['modalite-paiement']}</div>
+      <div class="form-group">${inputFields['echeance-reglement']}</div>
+      <div class="form-group"><input type="submit" value="Créer" class="create"/></div>
+      `;
+  });
+
+  $(".datepicker-widg").datepicker();
+
+  $("#add-license-line").click(function(e) {
+    e.preventDefault();
+    $("#license-lines").append(() => {
+        return `<tr>
+          <td><div class="form-group">${inputFields['quantite-licences']}</div></td>
+          <td><div class="form-group">${inputFields['designation-licences']}</div></td>
+          <td><div class="form-group">${inputFields['debut-licences']}</div></td>
+          <td><div class="form-group">${inputFields['fin-licences']}</div></td>
+          <td><div class="form-group">${inputFields['prix-unitaire-licences']}</div></td>
+          <td><div class="form-group">${inputFields['prix-total-licences']}</div></td>
+          <td><a href="#" id="remove-license-line"><span class="current">- Enlever</span></a>
+        </tr>`;
+    });
+  });
+
+  $("#add-service-line").click(function(e) {
+    e.preventDefault();
+    $("#service-lines").append(() => {
+      return `<tr>
+          <td><div class="form-group">${inputFields['designation-prestation']}</div></td>
+          <td><div class="form-group">${inputFields['debut-prestation']}</div></td>
+          <td><div class="form-group">${inputFields['fin-prestation']}</div></td>
+          <td><div class="form-group">${inputFields['prix-prestation']}</div></td>
+          <td><a href="#" id="remove-service-line"><span class="current">- Enlever</span></a>
+        </tr>`;
+    });
+  });
+
+  $("#service-lines, #license-lines").on('click', '#remove-service-line, #remove-license-line', function(e) {
+    e.preventDefault();
+    $(this).parents('tr').remove();
+  });
+
+  $("#contract-field input").autocomplete({
+    source: contractData
+  });
+
+  google.script.run.withSuccessHandler(loadAutocomplete).getPipedriveAccounts();
+
+}
+
+function loadAutocomplete(accountsData) {
+
+  let accountsName = [];
+  accountsName = accountsData.map((element) => {
+    return element['title'];
+  });
+
+  console.log("accountsname : " + accountsName);
+
+  $("#autocmp-accounts").autocomplete({
+    source: accountsName
+  });
+
+}
+
+$(document).ready(function() {
+
+  google.script.run.withSuccessHandler(loadForm).getCreateBillsFormData();
+
+});
+
+</script>
+
